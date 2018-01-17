@@ -43,11 +43,12 @@ public class LivySparkInterpreter extends BaseLivyInterpreter {
   @Override
   protected String extractWebUIAddress() throws LivyException {
     interpret(
-        "val webui=sc.getClass.getMethod(\"ui\").invoke(sc).asInstanceOf[Some[_]].get",
+        "val rawui = sc.getClass.getMethod(\"ui\"); val webui=rawui.invoke(sc).asInstanceOf[Option[Any]]; rawui.setAccessible(true)",
         null, false, false);
     return extractStatementResult(
         interpret(
-            "webui.getClass.getMethod(\"appUIAddress\").invoke(webui)", null, false, false)
+            "webui.map(ui => { val auMethod = ui.getClass.getMethod(\"webUrl\"); auMethod.setAccessible(true); auMethod.invoke(ui).toString }).get",
+                null, false, false)
             .message().get(0).getData());
   }
 
